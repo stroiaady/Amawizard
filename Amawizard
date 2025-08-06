@@ -1,0 +1,180 @@
+from zipfile import ZipFile
+import os
+
+# Structura de bază pentru un site afiliat Amazon cu recenzii automate (React + Tailwind)
+project_structure = {
+    "amawizard": {
+        "public": {
+            "index.html": "<!DOCTYPE html><html><head><title>Amawizard</title></head><body><div id='root'></div></body></html>"
+        },
+        "src": {
+            "App.jsx": """
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Category from './pages/Category';
+import Product from './pages/Product';
+import Navbar from './components/Navbar';
+
+function App() {
+  return (
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/category/:name" element={<Category />} />
+        <Route path="/product/:id" element={<Product />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
+""",
+            "main.jsx": """
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+""",
+            "index.css": "body { font-family: sans-serif; margin: 0; padding: 0; }",
+            "components": {
+                "Navbar.jsx": """
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const Navbar = () => (
+  <nav style={{ padding: '1rem', background: '#222', color: '#fff' }}>
+    <Link to="/" style={{ marginRight: '1rem', color: '#fff' }}>Home</Link>
+    <Link to="/category/kitchen" style={{ color: '#fff' }}>Kitchen Gadgets</Link>
+  </nav>
+);
+
+export default Navbar;
+"""
+            },
+            "pages": {
+                "Home.jsx": """
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const Home = () => (
+  <div style={{ padding: '2rem' }}>
+    <h1>Welcome to Amawizard</h1>
+    <p>Discover top kitchen gadgets with real reviews.</p>
+    <Link to="/category/kitchen">Browse Kitchen Gadgets</Link>
+  </div>
+);
+
+export default Home;
+""",
+                "Category.jsx": """
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const products = [
+  { id: '1', name: 'Electric Can Opener' },
+  { id: '2', name: 'Smart Kettle' },
+];
+
+const Category = () => (
+  <div style={{ padding: '2rem' }}>
+    <h2>Kitchen Gadgets</h2>
+    {products.map(product => (
+      <div key={product.id}>
+        <Link to={`/product/${product.id}`}>{product.name}</Link>
+      </div>
+    ))}
+  </div>
+);
+
+export default Category;
+""",
+                "Product.jsx": """
+import React from 'react';
+import { useParams } from 'react-router-dom';
+
+const Product = () => {
+  const { id } = useParams();
+  const affiliateTag = 'adis25-21';
+  const productLinks = {
+    '1': {
+      name: 'Electric Can Opener',
+      link: `https://www.amazon.co.uk/dp/B00EXAMPLE1?tag=${affiliateTag}`
+    },
+    '2': {
+      name: 'Smart Kettle',
+      link: `https://www.amazon.co.uk/dp/B00EXAMPLE2?tag=${affiliateTag}`
+    }
+  };
+  const product = productLinks[id];
+
+  return product ? (
+    <div style={{ padding: '2rem' }}>
+      <h2>{product.name}</h2>
+      <p>Read our review and buy below:</p>
+      <a href={product.link} target="_blank">Buy on Amazon</a>
+    </div>
+  ) : <p>Product not found</p>;
+};
+
+export default Product;
+"""
+            }
+        },
+        "package.json": """
+{
+  "name": "amawizard",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.1"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^4.5.0"
+  }
+}
+""",
+        "vite.config.js": "import { defineConfig } from 'vite'; import react from '@vitejs/plugin-react'; export default defineConfig({ plugins: [react()] });",
+        "README.md": "# Amawizard\n\nAmazon affiliate site for UK kitchen gadgets. Built with React + Vite."
+    }
+}
+
+# Helper to create project files
+def create_files(base_path, structure):
+    for name, content in structure.items():
+        path = os.path.join(base_path, name)
+        if isinstance(content, dict):
+            os.makedirs(path, exist_ok=True)
+            create_files(path, content)
+        else:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+# Create the project folder
+project_root = "/mnt/data/amawizard"
+os.makedirs(project_root, exist_ok=True)
+create_files(project_root, project_structure["amawizard"])
+
+# Zip the folder
+zip_path = "/mnt/data/amawizard.zip"
+with ZipFile(zip_path, "w") as zipf:
+    for root, dirs, files in os.walk(project_root):
+        for file in files:
+            file_path = os.path.join(root, file)
+            zipf.write(file_path, os.path.relpath(file_path, project_root))
+
+zip_path
